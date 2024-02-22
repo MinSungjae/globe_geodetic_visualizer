@@ -1,0 +1,15 @@
+<launch>
+    <arg name="fixed_on_vehicle" default="true"/>
+    <arg name="globe_scale_division"    default="100000.0"/>
+
+    <node name="globe_visualizer" pkg="globe_geodetic_visualizer" type="globe_geodetic_visualizer_node"/>
+    
+    <group if="$(arg fixed_on_vehicle)">
+        <node name="visualize_globe" pkg="rviz" type="rviz" args="-d $(find globe_geodetic_visualizer)/rviz/vehicle_centered.rviz"/>
+    </group>
+
+    <group unless="$(arg fixed_on_vehicle)">
+        <node name="visualize_globe" pkg="rviz" type="rviz" args="-d $(find globe_geodetic_visualizer)/rviz/globe_centered.rviz"/>
+    </group>
+
+</launch>
