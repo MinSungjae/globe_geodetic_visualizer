@@ -1,6 +1,12 @@
 #include <ros/ros.h>
 #include <ros/package.h>
+
+#include <tf2_msgs/TFMessage.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/TransformStamped.h>
 #include <geographic_msgs/GeoPoint.h>
 #include <geographic_msgs/GeoPoseStamped.h>
 #include <visualization_msgs/Marker.h>
@@ -21,6 +27,7 @@ class GlobeGeodeticVisualizer
 private:
     ros::NodeHandle* nh_;
     ros::Publisher globe_pub_, ego_pub_, markers_pub_;
+    ros::Publisher world_pub_, axis_pub_;
     ros::Subscriber ego_sub_;
 
     std::string package_path_, meshes_path_;
@@ -30,6 +37,8 @@ private:
     double scale_division_;
     double ego_scale_;
     double alt_scale_;
+
+    tf2::Quaternion ego_marker_correction;
 
     visualization_msgs::MarkerArray visualizations;
 

@@ -10,6 +10,9 @@ project(globe_geodetic_visualizer)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   roslib
+  tf2
+  tf2_ros
+  tf2_geometry_msgs
   std_msgs
   geometry_msgs
   geographic_msgs
@@ -108,7 +111,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES globe_geodetic_visualizer
-#  CATKIN_DEPENDS geometry_msgs roscpp std_msgs visualization_msgs
+  CATKIN_DEPENDS geometry_msgs roscpp std_msgs visualization_msgs tf2 tf2_ros
 #  DEPENDS system_lib
 )
 
