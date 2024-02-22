@@ -3,6 +3,7 @@
 GlobeGeodeticVisualizer::GlobeGeodeticVisualizer(ros::NodeHandle* nh, double viz_division, double alt_scale) : nh_(nh), scale_division_(viz_division), alt_scale_(alt_scale)
 {
     globe_pub_ = nh_->advertise<visualization_msgs::Marker>("globe_marker", 0);
+    land_pub_ = nh_->advertise<visualization_msgs::Marker>("land_marker", 0);
     ego_pub_ = nh_->advertise<visualization_msgs::Marker>("ego_marker", 0);
     markers_pub_ = nh_->advertise<visualization_msgs::MarkerArray>("markers", 0);
     axis_pub_ = nh_->advertise<geometry_msgs::PoseStamped>("test_axis", 0);
@@ -14,6 +15,7 @@ GlobeGeodeticVisualizer::GlobeGeodeticVisualizer(ros::NodeHandle* nh, double viz
     // meshes_path_ = package_path_ + "/meshes/";
 
     createGlobeMarker();
+    createLandMarker();
     createEgoMarker();
 }
 
@@ -79,14 +81,39 @@ void GlobeGeodeticVisualizer::createGlobeMarker()
     globe_marker.pose.orientation.y = 0.0;
     globe_marker.pose.orientation.z = 0.0;
     globe_marker.pose.orientation.w = 1.0;
-    globe_marker.scale.x = GLOBE_RADIUS * 2 / scale_division_; // Diameter in X
-    globe_marker.scale.y = GLOBE_RADIUS * 2 / scale_division_; // Diameter in Y
-    globe_marker.scale.z = GLOBE_RADIUS * 2 / scale_division_; // Diameter in Z
+    globe_marker.scale.x = GLOBE_RADIUS * 2 / scale_division_;
+    globe_marker.scale.y = GLOBE_RADIUS * 2 / scale_division_;
+    globe_marker.scale.z = GLOBE_RADIUS * 2 / scale_division_;
     globe_marker.color.r = 0.0;
     globe_marker.color.g = 0.5;
     globe_marker.color.b = 1.0; // Blue globe_marker
     globe_marker.color.a = 1.0; // Don't forget to set the alpha!
     globe_marker.lifetime = ros::Duration();
+}
+
+void GlobeGeodeticVisualizer::createLandMarker()
+{
+    land_marker.header.frame_id = "world";
+    land_marker.header.stamp = ros::Time();
+    land_marker.ns = "land";
+    land_marker.id = 0;
+    land_marker.type = visualization_msgs::Marker::MESH_RESOURCE;
+    land_marker.mesh_resource = "package://globe_geodetic_visualizer/meshes/Globe2.stl";
+    land_marker.action = visualization_msgs::Marker::ADD;
+    land_marker.pose.position.x = 0;
+    land_marker.pose.position.y = 0;
+    land_marker.pose.position.z = 0;
+    tf2::Quaternion land_correction;
+    land_correction.setEulerZYX(D2R(180.0), D2R(-6.65), D2R(96.5));
+    land_marker.pose.orientation = tf2::toMsg(land_correction);
+    land_marker.scale.x = GLOBE_RADIUS * 2 / scale_division_/72.95;
+    land_marker.scale.y = GLOBE_RADIUS * 2 / scale_division_/72.95;
+    land_marker.scale.z = GLOBE_RADIUS * 2 / scale_division_/72.95;
+    land_marker.color.r = 0.1;
+    land_marker.color.g = 0.5;
+    land_marker.color.b = 0.1; // Blue land_marker
+    land_marker.color.a = 1.0; // Don't forget to set the alpha!
+    land_marker.lifetime = ros::Duration();
 }
 
 void GlobeGeodeticVisualizer::createEgoMarker()
@@ -97,7 +124,7 @@ void GlobeGeodeticVisualizer::createEgoMarker()
     ego_marker.id = 1;
     ego_marker.type = visualization_msgs::Marker::MESH_RESOURCE;
     ego_marker.mesh_resource = "package://globe_geodetic_visualizer/meshes/Cessna_172.stl";
-    ego_scale_ = 10000.0/scale_division_;
+    ego_scale_ = 5000.0/scale_division_;
     ego_marker.action = visualization_msgs::Marker::ADD;
     ego_marker.pose.position.x = 0;
     ego_marker.pose.position.y = 0;
@@ -134,6 +161,7 @@ void GlobeGeodeticVisualizer::addMarkers(visualization_msgs::Marker marker)
 void GlobeGeodeticVisualizer::visualizeMarker()
 {
     globe_pub_.publish(globe_marker);
+    land_pub_.publish(land_marker);
 
     geometry_msgs::PoseStamped ego_ecef = geographic2geometryECEF(ego);
     ego_marker.header.stamp = ego_ecef.header.stamp;

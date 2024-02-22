@@ -26,13 +26,13 @@ class GlobeGeodeticVisualizer
 {
 private:
     ros::NodeHandle* nh_;
-    ros::Publisher globe_pub_, ego_pub_, markers_pub_;
+    ros::Publisher globe_pub_, ego_pub_, markers_pub_, land_pub_;
     ros::Publisher world_pub_, axis_pub_;
     ros::Subscriber ego_sub_;
 
     std::string package_path_, meshes_path_;
     
-    visualization_msgs::Marker globe_marker, ego_marker;
+    visualization_msgs::Marker globe_marker, ego_marker, land_marker;
     geographic_msgs::GeoPoseStamped ego;
     double scale_division_;
     double ego_scale_;
@@ -45,6 +45,7 @@ private:
     geometry_msgs::Point lla2ECEF(geographic_msgs::GeoPoint lla);
 
     void createGlobeMarker();
+    void createLandMarker();
     void createEgoMarker();
     void ego_cb(const geographic_msgs::GeoPoseStamped& msg);
     geometry_msgs::PoseStamped geographic2geometryECEF(geographic_msgs::GeoPoseStamped geographic);
