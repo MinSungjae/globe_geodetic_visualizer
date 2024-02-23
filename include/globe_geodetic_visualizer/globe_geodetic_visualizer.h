@@ -3,6 +3,7 @@
 
 #include <tf2_msgs/TFMessage.h>
 #include <tf2/LinearMath/Transform.h>
+#include <tf2_ros/transform_broadcaster.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <geometry_msgs/PoseStamped.h>
@@ -30,8 +31,11 @@ private:
     ros::Publisher world_pub_, axis_pub_;
     ros::Subscriber ego_sub_;
 
+    tf2_ros::TransformBroadcaster ego_br_;
+    geometry_msgs::TransformStamped ego_transform;
+
     std::string package_path_, meshes_path_;
-    
+
     visualization_msgs::Marker globe_marker, ego_marker, land_marker;
     geographic_msgs::GeoPoseStamped ego;
     double scale_division_;
@@ -47,13 +51,14 @@ private:
     void createGlobeMarker();
     void createLandMarker();
     void createEgoMarker();
-    void ego_cb(const geographic_msgs::GeoPoseStamped& msg);
+    void createEgoTransform();
+    void ego_geographic_cb(const geographic_msgs::GeoPoseStamped& msg);
     geometry_msgs::PoseStamped geographic2geometryECEF(geographic_msgs::GeoPoseStamped geographic);
 
 public:
     GlobeGeodeticVisualizer(ros::NodeHandle* nh, meter viz_division, double alt_scale);
 
-    void visualizeMarker();
+    bool visualizeMarker();
     
     void addMarkers(visualization_msgs::Marker marker);
 };

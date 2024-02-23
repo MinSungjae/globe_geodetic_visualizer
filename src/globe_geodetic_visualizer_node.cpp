@@ -14,7 +14,8 @@ int main(int argc, char** argv)
 
     while(ros::ok())
     {
-        visualizer.visualizeMarker();
+        if(!visualizer.visualizeMarker())
+            ROS_WARN("/ego not yet received...");
         ros::spinOnce();
         rate.sleep();
     }

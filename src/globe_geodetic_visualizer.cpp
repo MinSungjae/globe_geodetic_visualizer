@@ -9,7 +9,7 @@ GlobeGeodeticVisualizer::GlobeGeodeticVisualizer(ros::NodeHandle* nh, double viz
     axis_pub_ = nh_->advertise<geometry_msgs::PoseStamped>("test_axis", 0);
     world_pub_ = nh_->advertise<geometry_msgs::PoseStamped>("world_axis", 0);
 
-    ego_sub_ = nh_->subscribe("/ego", 1, &GlobeGeodeticVisualizer::ego_cb, this);
+    ego_sub_ = nh_->subscribe("/ego", 1, &GlobeGeodeticVisualizer::ego_geographic_cb, this);
 
     // package_path_ = ros::package::getPath("globe_geodetic_visualizer");
     // meshes_path_ = package_path_ + "/meshes/";
@@ -17,15 +17,18 @@ GlobeGeodeticVisualizer::GlobeGeodeticVisualizer(ros::NodeHandle* nh, double viz
     createGlobeMarker();
     createLandMarker();
     createEgoMarker();
+    createEgoTransform();
 }
 
-void GlobeGeodeticVisualizer::ego_cb(const geographic_msgs::GeoPoseStamped& msg)
+void GlobeGeodeticVisualizer::ego_geographic_cb(const geographic_msgs::GeoPoseStamped& msg)
 {
     ego = msg;
+    // Delete after ego publisher
+    ego.header.stamp = ros::Time::now();
 }
 
 geometry_msgs::Point GlobeGeodeticVisualizer::lla2ECEF(geographic_msgs::GeoPoint lla)
-{   
+{
     geometry_msgs::Point ecef;
 
     double clat = cos(D2R(lla.latitude));
@@ -106,9 +109,9 @@ void GlobeGeodeticVisualizer::createLandMarker()
     tf2::Quaternion land_correction;
     land_correction.setEulerZYX(D2R(180.0), D2R(-6.65), D2R(96.5));
     land_marker.pose.orientation = tf2::toMsg(land_correction);
-    land_marker.scale.x = GLOBE_RADIUS * 2 / scale_division_/72.95;
-    land_marker.scale.y = GLOBE_RADIUS * 2 / scale_division_/72.95;
-    land_marker.scale.z = GLOBE_RADIUS * 2 / scale_division_/72.95;
+    land_marker.scale.x = GLOBE_RADIUS * 2 / scale_division_/72.85;
+    land_marker.scale.y = GLOBE_RADIUS * 2 / scale_division_/72.85;
+    land_marker.scale.z = GLOBE_RADIUS * 2 / scale_division_/72.85;
     land_marker.color.r = 0.1;
     land_marker.color.g = 0.5;
     land_marker.color.b = 0.1; // Blue land_marker
@@ -141,6 +144,12 @@ void GlobeGeodeticVisualizer::createEgoMarker()
     ego_marker.lifetime = ros::Duration();
 }
 
+void GlobeGeodeticVisualizer::createEgoTransform()
+{
+    ego_transform.header.frame_id = "world";
+    ego_transform.child_frame_id = "ego";
+}
+
 /** NOTE!!! Here, marker.pose.position is Geodetic coordinates.
  * @param marker.pose.position. {X: Latitude, Y: Longitude, Z: Altitude}.
 */
@@ -158,8 +167,10 @@ void GlobeGeodeticVisualizer::addMarkers(visualization_msgs::Marker marker)
     visualizations.markers.push_back(marker);
 }
 
-void GlobeGeodeticVisualizer::visualizeMarker()
+bool GlobeGeodeticVisualizer::visualizeMarker()
 {
+    if(ego.header.stamp < ros::Time::now() - ros::Duration(1.0))
+        return false;
     globe_pub_.publish(globe_marker);
     land_pub_.publish(land_marker);
 
@@ -180,10 +191,18 @@ void GlobeGeodeticVisualizer::visualizeMarker()
     axis.pose.orientation = tf2::toMsg(ego_quat*ecef2ned);
     axis_pub_.publish(axis);
 
+    ego_transform.header.stamp = ego.header.stamp;
+    ego_transform.transform.translation.x = ego_ecef.pose.position.x;
+    ego_transform.transform.translation.y = ego_ecef.pose.position.y;
+    ego_transform.transform.translation.z = ego_ecef.pose.position.z;
+    ego_transform.transform.rotation = ego_ecef.pose.orientation;
+    ego_br_.sendTransform(ego_transform);
+
     geometry_msgs::PoseStamped world;
     world.header.frame_id = "world";
     world.pose.orientation.w = 1.0;
     world_pub_.publish(world);
 
     markers_pub_.publish(visualizations);
+    return true;
 }
