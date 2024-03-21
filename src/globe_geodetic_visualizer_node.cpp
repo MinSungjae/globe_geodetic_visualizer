@@ -8,14 +8,14 @@ int main(int argc, char** argv)
     ros::Rate rate(10);
 
     double scale_division = 1000000.0;
-    double altitude_scale = 1000.0;
+    double altitude_scale = 25.0;
 
     GlobeGeodeticVisualizer visualizer(&nh, scale_division, altitude_scale);
 
     while(ros::ok())
     {
         if(!visualizer.visualizeMarker())
-            ROS_WARN("/ego not yet received...");
+            ROS_WARN("/ego not yet received or outdated...");
         ros::spinOnce();
         rate.sleep();
     }
